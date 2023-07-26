@@ -1,0 +1,55 @@
+on: [push, pull_request, workflow_dispatch]
+
+name: Build
+
+jobs:
+  skywatchKeyboard:
+    runs-on: ubuntu-latest
+    name: skywatch
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Cache qmk toolchain
+        uses: actions/cache@v2
+        env:
+          cache-name: qmk-toolchain
+        with:
+          path: |
+            /home/runner/.cache/pip
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Install dependencies for qmk build
+        uses: mstksg/get-package@v1
+        with:
+          apt-get: git python3-pip dfu-util dfu-programmer avrdude 
+      - name: Install qmk using pip
+        working-directory: ./qmk_firmware
+        run: |
+          python3 -m pip install --user qmk
+          qmk setup --yes --home .
+      - name: Prepare qmk_firmware folder
+        run: cp -R skywatch/ qmk_firmware/keyboards/
+      - name: Prepare qmk_firmware folder via
+        run: cp -R skywatch/ vial-qmk/keyboards/
+      - name: Build skywatch-keyboard firmware
+        working-directory: ./qmk_firmware
+        run: qmk compile -kb skywatch -km default 
+      - name: Archive
+        uses: actions/upload-artifact@v2
+        with:
+          name: skywatch-keyboard
+          path: qmk_firmware/skywatch_default.uf2
+
+      - name: Build skywatch-keyboard firmware via
+        working-directory: ./vial-qmk
+        run: qmk compile -kb skywatch -km vial 
+      - name: Archive
+        uses: actions/upload-artifact@v2
+        with:
+          name: skywatch-keyboard
+          path: vial-qmk/skywatch_vial.uf2

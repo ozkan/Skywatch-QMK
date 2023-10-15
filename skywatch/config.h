@@ -5,7 +5,6 @@
 #define I2C1_SDA_PIN GP14
 #define OLED_BRIGHTNESS 128
 
-
 #ifdef OLED_ENABLE
 #    define OLED_DISPLAY_128X64
 #    define OLED_FONT_H "./lib/glcdfont.c"
